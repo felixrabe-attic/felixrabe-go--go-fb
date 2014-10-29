@@ -9,13 +9,13 @@ Docs: http://godoc.org/gopkg.in/felixrabe-go/go-fb.v0
 About this fork
 ---------------
 
-This fork adds:
+This fork is based on https://github.com/rowland/go-fb. This fork adds:
 
 -   API versioning (by adding the `v0` branch): `go get gopkg.in/felixrabe-go/go-fb.v0`
 
 -   support for embedded use by making username+password optional
 
--   more information in README.md
+-   documentation
 
 
 On the horizon (see also https://github.com/rowland/go-fb/issues/1):
