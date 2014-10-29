@@ -11,7 +11,7 @@ About this fork
 
 This fork adds:
 
--   API versioning (by adding the `v0` branch): go get gopkg.in/felixrabe-go/go-fb.v0
+-   API versioning (by adding the `v0` branch): `go get gopkg.in/felixrabe-go/go-fb.v0`
 
 -   support for embedded use by making username+password optional
 
@@ -49,7 +49,7 @@ Example
 
     func main() {
         if len(os.Args) < 2 {
-            fmt.Println("Usage: program DB1.FDB")
+            fmt.Println("Usage: program path/to/database.fdb")
             os.Exit(1)
         }
         dbFilename := os.Args[1]
@@ -69,16 +69,18 @@ Example
         if err != nil {
             log.Fatal(err)
         }
-        if cu != nil {
-            for cu.Next() {
-                row := cu.Row()
-                var n int
-                err := row.Scan(&n)
-                if err != nil {
-                    log.Fatal(err)
-                }
-                fmt.Println("Number of relations in DB:", n)
-            }
+        if cu == nil {
+            log.Fatal("empty cursor returned by conn.Execute()")
         }
         defer cu.Close()
+
+        for cu.Next() {
+            row := cu.Row()
+            var n int
+            err := row.Scan(&n)
+            if err != nil {
+                log.Fatal(err)
+            }
+            fmt.Println("Number of relations in DB:", n)
+        }
     }
