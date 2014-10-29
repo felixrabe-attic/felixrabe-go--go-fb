@@ -32,6 +32,7 @@ type Database struct {
 	Database       string
 	Username       string
 	Password       string
+	Embedded       bool
 	Role           string
 	Charset        string
 	LowercaseNames bool
@@ -61,13 +62,18 @@ func New(parms string) (db *Database, err error) {
 	if !ok {
 		return nil, errors.New("database parm required")
 	}
-	username, ok := p["username"]
-	if !ok {
-		return nil, errors.New("username parm required")
+	username, userOk := p["username"]
+	password, passOk := p["password"]
+	if userOk != passOk { // only one of them was specified
+		if passOk {
+			return nil, errors.New("username parm required")
+		} else {
+			return nil, errors.New("password parm required")
+		}
 	}
-	password, ok := p["password"]
-	if !ok {
-		return nil, errors.New("password parm required")
+	embedded := false
+	if !userOk && !passOk {
+		embedded = true
 	}
 	charset, _ := p["charset"]
 	role, _ := p["role"]
@@ -85,7 +91,7 @@ func New(parms string) (db *Database, err error) {
 		}
 	}
 	timezone, _ := p["timezone"]
-	db = &Database{database, username, password, role, charset, lowercaseNames, pageSize, timezone}
+	db = &Database{database, username, password, embedded, role, charset, lowercaseNames, pageSize, timezone}
 	return db, nil
 }
 
@@ -160,13 +166,17 @@ func (db *Database) Connect() (*Connection, error) {
 	database2 := (*C.ISC_SCHAR)(unsafe.Pointer(database))
 	defer C.free(unsafe.Pointer(database))
 
-	dbp := db.createDbp()
-	dbp2 := C.CString(dbp)
-	dbp3 := (*C.ISC_SCHAR)(unsafe.Pointer(dbp2))
-	defer C.free(unsafe.Pointer(dbp2))
+	if db.Embedded {
+		C.isc_attach_database(&isc_status[0], 0, database2, &handle, 0, nil)
+	} else {
+		dbp := db.createDbp()
+		dbp2 := C.CString(dbp)
+		dbp3 := (*C.ISC_SCHAR)(unsafe.Pointer(dbp2))
+		defer C.free(unsafe.Pointer(dbp2))
 
-	var length C.short = C.short(len(dbp))
-	C.isc_attach_database(&isc_status[0], 0, database2, &handle, length, dbp3)
+		var length C.short = C.short(len(dbp))
+		C.isc_attach_database(&isc_status[0], 0, database2, &handle, length, dbp3)
+	}
 	if err := fbErrorCheck(&isc_status); err != nil {
 		return nil, err
 	}
