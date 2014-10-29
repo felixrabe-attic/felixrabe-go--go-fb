@@ -75,10 +75,8 @@ Example
         defer cu.Close()
 
         for cu.Next() {
-            row := cu.Row()
             var n int
-            err := row.Scan(&n)
-            if err != nil {
+            if err := cu.Row().Scan(&n); err != nil {
                 log.Fatal(err)
             }
             fmt.Println("Number of relations in DB:", n)
